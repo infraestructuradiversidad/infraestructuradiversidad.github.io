@@ -57,11 +57,29 @@
     window.addEventListener('offline', mostrarSinRed);
     window.addEventListener('online', function() { document.getElementById('sinRed').style.display = 'none'; });
 
+    // El portal avisa "portalListo" cuando carga bien dentro de esta página.
+    // Si el celular bloquea las cookies de terceros, Google responde con un error dentro del marco
+    // y ese aviso nunca llega: en ese caso se abre el portal directamente (funciona igual).
+    var listo = false, redirigido = false;
+    function abrirDirecto() {
+      if (listo || redirigido) return;
+      redirigido = true;
+      location.replace(PORTAL);
+    }
+    window.addEventListener('message', function(ev) {
+      var d = ev.data;
+      if (d && d.portalInfra && d.tipo === 'portalListo') {
+        listo = true;
+        carga.style.opacity = '0';
+        setTimeout(function() { carga.style.display = 'none'; }, 450);
+      }
+    });
     marco.addEventListener('load', function() {
-      carga.style.opacity = '0';
-      setTimeout(function() { carga.style.display = 'none'; }, 450);
+      // El marco terminó de cargar: se espera unos segundos el aviso del portal
+      setTimeout(abrirDirecto, 7000);
     });
     setTimeout(function() { document.getElementById('ayuda').style.display = 'block'; }, 12000);
+    setTimeout(abrirDirecto, 25000);   // respaldo si la carga se queda colgada
     marco.src = PORTAL;
 
     if ('serviceWorker' in navigator) {
