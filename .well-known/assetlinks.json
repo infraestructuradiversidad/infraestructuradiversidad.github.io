@@ -1,1 +1,8 @@
-
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.infraestructuradiversidad.twa",
+        "sha256_cert_fingerprints": ["A0:37:28:56:5E:1A:C9:B3:14:F5:88:D5:FB:5D:F5:06:93:16:94:FF:E7:44:83:76:C9:B9:C8:0A:80:C9:C2:8A"]
+      }
+    }]
