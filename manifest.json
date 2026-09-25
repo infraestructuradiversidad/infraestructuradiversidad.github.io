@@ -1,0 +1,20 @@
+{
+  "name": "Gestión de la Infraestructura",
+  "short_name": "Infraestructura",
+  "description": "Portal de Infraestructura de la Fundación Diversidad: reportes de fallas, inventarios de cómputo y activos, insumos y solicitud de recursos.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0179d8",
+  "lang": "es-CO",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

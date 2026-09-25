@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Gestión de la Infraestructura</title>
+  <meta name="description" content="Portal de Infraestructura - Fundación Diversidad: reportes de fallas, inventarios, insumos y recursos.">
+  <meta name="theme-color" content="#0179d8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <style>
+    html, body { height: 100%; margin: 0; background: #ffffff; }
+    body { font-family: Arial, sans-serif; overflow: hidden; }
+    #portal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    #carga { position: fixed; inset: 0; background: #ffffff; display: flex; flex-direction: column;
+             align-items: center; justify-content: center; gap: 18px; z-index: 2; transition: opacity .4s; }
+    #carga img { width: 80%; max-width: 280px; height: auto; }
+    #carga .txt { color: #0179d8; font-size: 15px; font-weight: bold; }
+    #carga .barra { width: 160px; height: 4px; background: #e7f1ff; border-radius: 2px; overflow: hidden; }
+    #carga .barra div { width: 40%; height: 100%; background: #0179d8; animation: ir 1.2s infinite ease-in-out; }
+    @keyframes ir { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+    #ayuda { display: none; font-size: 13px; color: #666; text-align: center; padding: 0 24px; }
+    #ayuda a { color: #0179d8; }
+    #sinRed { display: none; position: fixed; inset: 0; background: #fff; z-index: 3; flex-direction: column;
+              align-items: center; justify-content: center; text-align: center; padding: 24px; color: #333; }
+    #sinRed button { margin-top: 14px; padding: 12px 20px; background: #0179d8; color: #fff; border: 0; border-radius: 6px; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <div id="carga">
+    <img src="logo.png" alt="Fundación Diversidad">
+    <div class="txt">Gestión de la Infraestructura</div>
+    <div class="barra"><div></div></div>
+    <div id="ayuda">¿Tarda mucho? <a id="abrirDirecto" href="#" target="_blank" rel="noopener">Abrir el portal directamente</a></div>
+  </div>
+
+  <div id="sinRed">
+    <div style="font-size:40px;">📶</div>
+    <p><b>Sin conexión a internet</b><br>La app necesita internet para funcionar. Revisa tu conexión e inténtalo de nuevo.</p>
+    <button type="button" onclick="location.reload()">Reintentar</button>
+  </div>
+
+  <iframe id="portal" title="Gestión de la Infraestructura"
+          allow="camera; clipboard-write; fullscreen"></iframe>
+
+  <script>
+    // Dirección del portal (Apps Script). Si algún día cambia, se actualiza SOLO aquí.
+    var PORTAL = 'https://script.google.com/macros/s/AKfycby4sOfiYW3lgQpeqEE60Bb34ysN0uh5uUKAUyFqJfNoiagUwITS4wfNKMgbkmvqkXrZrg/exec';
+
+    var marco = document.getElementById('portal');
+    var carga = document.getElementById('carga');
+    document.getElementById('abrirDirecto').href = PORTAL;
+
+    function mostrarSinRed() { document.getElementById('sinRed').style.display = 'flex'; }
+    if (!navigator.onLine) { mostrarSinRed(); }
+    window.addEventListener('offline', mostrarSinRed);
+    window.addEventListener('online', function() { document.getElementById('sinRed').style.display = 'none'; });
+
+    marco.addEventListener('load', function() {
+      carga.style.opacity = '0';
+      setTimeout(function() { carga.style.display = 'none'; }, 450);
+    });
+    setTimeout(function() { document.getElementById('ayuda').style.display = 'block'; }, 12000);
+    marco.src = PORTAL;
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() { navigator.serviceWorker.register('sw.js').catch(function() {}); });
+    }
+  </script>
+</body>
+</html>
