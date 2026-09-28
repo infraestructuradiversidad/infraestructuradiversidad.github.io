@@ -20,6 +20,10 @@
     #carga .barra { width: 160px; height: 4px; background: #e7f1ff; border-radius: 2px; overflow: hidden; }
     #carga .barra div { width: 40%; height: 100%; background: #0179d8; animation: ir 1.2s infinite ease-in-out; }
     @keyframes ir { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+    #mensaje { display: none; width: min(420px, calc(100% - 40px)); background: #f0f7ff; border: 1px solid #cfe3fb; border-left: 5px solid #0179d8;
+               border-radius: 12px; padding: 12px 14px; box-sizing: border-box; text-align: left; }
+    #mensaje .t { font-weight: bold; color: #0f172a; font-size: 15px; }
+    #mensaje .c { color: #334155; font-size: 14px; margin-top: 4px; line-height: 1.4; white-space: pre-wrap; }
     #ayuda { display: none; font-size: 13px; color: #666; text-align: center; padding: 0 24px; }
     #ayuda a { color: #0179d8; }
     #sinRed { display: none; position: fixed; inset: 0; background: #fff; z-index: 3; flex-direction: column;
@@ -32,6 +36,7 @@
     <img src="logo.png" alt="Fundación Diversidad">
     <div class="txt">Gestión de la Infraestructura</div>
     <div class="barra"><div></div></div>
+    <div id="mensaje"><div class="t"></div><div class="c"></div></div>
     <div id="ayuda">¿Tarda mucho? <a id="abrirDirecto" href="#" target="_blank" rel="noopener">Abrir el portal directamente</a></div>
   </div>
 
@@ -48,6 +53,31 @@
     // Dirección del portal (Apps Script). Si algún día cambia, se actualiza SOLO aquí.
     var PORTAL = 'https://script.google.com/macros/s/AKfycby4sOfiYW3lgQpeqEE60Bb34ysN0uh5uUKAUyFqJfNoiagUwITS4wfNKMgbkmvqkXrZrg/exec';
 
+    // ---------- Mensaje de la semana ----------
+    // Se muestra al instante con la copia guardada en el celular; el portal la actualiza al abrir.
+    var CLAVE_MSG = 'infraMensajeSemana';
+    function hoyISO() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+    function pintarMensaje(m) {
+      var c = document.getElementById('mensaje');
+      if (!m || !m.texto || (m.hasta && m.hasta < hoyISO())) { c.style.display = 'none'; return; }
+      c.querySelector('.t').textContent = (m.emoji || '📣') + ' ' + (m.titulo || 'Mensaje de la semana');
+      c.querySelector('.c').textContent = m.texto;
+      c.style.display = 'block';
+    }
+    function guardarMensaje(m) {
+      try { if (m && m.texto) localStorage.setItem(CLAVE_MSG, JSON.stringify(m)); else localStorage.removeItem(CLAVE_MSG); } catch (e) {}
+    }
+    try { pintarMensaje(JSON.parse(localStorage.getItem(CLAVE_MSG) || 'null')); } catch (e) {}
+    function actualizarMensajeEnLinea(listo) {
+      // Consulta el mensaje vigente (solo lectura) directamente al portal
+      var hecho = false, fin = function() { if (!hecho) { hecho = true; if (listo) listo(); } };
+      try {
+        fetch(PORTAL + '?api=mensaje', { cache: 'no-store' }).then(function(r) { return r.json(); })
+          .then(function(m) { guardarMensaje(m && m.texto ? m : null); pintarMensaje(m); fin(); }).catch(fin);
+      } catch (e) { fin(); }
+      setTimeout(fin, 1500);
+    }
+
     var marco = document.getElementById('portal');
     var carga = document.getElementById('carga');
     document.getElementById('abrirDirecto').href = PORTAL;
@@ -61,26 +91,41 @@
     // Si el celular bloquea las cookies de terceros, Google responde con un error dentro del marco
     // y ese aviso nunca llega: en ese caso se abre el portal directamente (funciona igual).
     var listo = false, redirigido = false;
+    var CLAVE_MODO = 'infraModoDirecto', DIAS_REINTENTO = 3;
+    function leerModo() { try { return Number(localStorage.getItem(CLAVE_MODO) || 0); } catch (e) { return 0; } }
+    function guardarModo(v) { try { if (v) localStorage.setItem(CLAVE_MODO, String(v)); else localStorage.removeItem(CLAVE_MODO); } catch (e) {} }
     function abrirDirecto() {
       if (listo || redirigido) return;
       redirigido = true;
-      location.replace(PORTAL);
+      guardarModo(Date.now());          // este celular necesita abrir el portal directo: se recuerda
+      actualizarMensajeEnLinea(function() { location.replace(PORTAL); });
+    }
+    // Si este celular ya necesitó el modo directo hace poco, se abre de una vez (sin esperar).
+    // Cada pocos días se vuelve a intentar el modo normal, por si se arregló la configuración.
+    var modo = leerModo();
+    if (modo && (Date.now() - modo) < DIAS_REINTENTO * 86400000) {
+      redirigido = true;
+      // Modo directo: se intenta traer el mensaje nuevo (máximo 1,5 s) y se abre el portal.
+      // Mientras el portal responde, esta pantalla (con el mensaje) sigue visible.
+      actualizarMensajeEnLinea(function() { location.replace(PORTAL); });
     }
     window.addEventListener('message', function(ev) {
       var d = ev.data;
+      if (d && d.portalInfra && d.tipo === 'mensajeSemana') { guardarMensaje(d.mensaje); pintarMensaje(d.mensaje); return; }
       if (d && d.portalInfra && d.tipo === 'portalListo') {
         listo = true;
+        guardarModo(0);                 // el modo normal funciona en este celular
         carga.style.opacity = '0';
         setTimeout(function() { carga.style.display = 'none'; }, 450);
       }
     });
     marco.addEventListener('load', function() {
       // El marco terminó de cargar: se espera unos segundos el aviso del portal
-      setTimeout(abrirDirecto, 7000);
+      setTimeout(abrirDirecto, 5000);
     });
     setTimeout(function() { document.getElementById('ayuda').style.display = 'block'; }, 12000);
     setTimeout(abrirDirecto, 25000);   // respaldo si la carga se queda colgada
-    marco.src = PORTAL;
+    if (!redirigido) marco.src = PORTAL;
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() { navigator.serviceWorker.register('sw.js').catch(function() {}); });

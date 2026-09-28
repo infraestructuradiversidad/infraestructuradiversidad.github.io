@@ -1,7 +1,7 @@
 // Service worker de la página puente: guarda solo la "cáscara" (logo, íconos) para
 // que la app abra rápido. El portal siempre se carga en vivo desde internet, por eso
 // los cambios que publiques en Apps Script se ven sin reinstalar nada.
-const CACHE = 'infra-puente-v3';
+const CACHE = 'infra-puente-v5';
 const ARCHIVOS = ['./', 'index.html', 'manifest.json', 'logo.png', 'favicon.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', function(e) {
